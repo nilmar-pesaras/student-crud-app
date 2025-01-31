@@ -1,0 +1,21 @@
+{
+  "name": "redis-project",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "start": "concurrently \"npm run start:client\" \"npm run start:server\"",
+    "start:client": "npm start --workspace=client",
+    "start:server": "npm start --workspace=server",
+    "install:all": "npm install",
+    "build": "npm run build --workspace=client",
+    "dev": "concurrently \"npm run start:client\" \"npm run dev:server\"",
+    "dev:server": "npm run dev --workspace=server"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+} 
