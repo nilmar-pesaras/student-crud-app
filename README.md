@@ -5,7 +5,6 @@
 
 **Tools**
 - `volta` - JavaScript Manager
-- `pnpm` - Node Package Manager
 
 <br>
 
@@ -26,21 +25,24 @@ node --version
 
 <br>
 
-Install `pnpm` using `volta`.
+# Installing project dependencies
+
+## Backend
+Installing dependencies for backend
 ```powershell
-volta install pnpmdsdsdsd
+cd redis-backend && npm install
 ```
-dsd
-install node packages using `pnpm`
+Run frontend
 ```powershell
-pnpm install
+npm start
 ```
 
-# Start only frontend
-npm run start:client
-
-# Start only backend
-npm run start:server
-
-# Start backend in dev mode (with nodemon)
-npm run dev:server
+## Frontend
+Installing dependencies for frontend
+```powershell
+cd redis-frontend && npm install
+```
+Run backend
+```powershell
+node server.js
+```
