@@ -8,6 +8,8 @@
 
 <br>
 
+*Note: If you already have node installed, you can skip the following steps.*
+
 Volta installation.
 ```powershell
 winget install Volta.Volta
