@@ -7,8 +7,7 @@ import './App.css';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
-// Replace the hardcoded API_URL with environment variable
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_URL = 'http://localhost:5000';
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
 function App() {

@@ -8,9 +8,7 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const REDIS_URL = process.env.REDIS_URL || 'redis://@127.0.0.1:6379';
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-const ADMIN_REGISTRATION_CODE = process.env.ADMIN_REGISTRATION_CODE || 'ADMIN123';
 
 // Middleware
 app.use(cors());
@@ -18,7 +16,7 @@ app.use(bodyParser.json());
 
 // Connect to Redis
 const client = redis.createClient({
-  url: REDIS_URL
+  url: 'redis://@127.0.0.1:6379'  // Default Redis connection
 });
 
 client.connect()
@@ -55,6 +53,7 @@ app.post('/auth/register-admin', async (req, res) => {
   const { username, password, adminCode } = req.body;
   
   // Verify admin registration code
+  const ADMIN_REGISTRATION_CODE = 'ADMIN123'; // In production, this should be in environment variables
   if (adminCode !== ADMIN_REGISTRATION_CODE) {
     return res.status(403).json({ message: 'Invalid admin registration code' });
   }

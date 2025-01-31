@@ -1,5 +1,5 @@
 {
-  "name": "redis-client",
+  "name": "redis-frontend",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -7,8 +7,8 @@
     "cra-template": "1.2.0",
     "jspdf": "^2.5.2",
     "jspdf-autotable": "^3.8.4",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "react-scripts": "5.0.1",
     "react-toastify": "^11.0.3",
     "recharts": "^2.15.1",
