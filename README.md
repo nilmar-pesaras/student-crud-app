@@ -36,3 +36,11 @@ install node packages using `pnpm`
 pnpm install
 ```
 
+# Start only frontend
+npm run start:client
+
+# Start only backend
+npm run start:server
+
+# Start backend in dev mode (with nodemon)
+npm run dev:server
