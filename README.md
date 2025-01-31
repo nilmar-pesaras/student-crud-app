@@ -28,9 +28,9 @@ node --version
 
 Install `pnpm` using `volta`.
 ```powershell
-volta install pnpm
+volta install pnpmdsdsdsd
 ```
-
+dsd
 install node packages using `pnpm`
 ```powershell
 pnpm install
