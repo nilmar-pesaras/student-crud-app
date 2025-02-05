@@ -8,7 +8,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
 const API_URL = 'http://localhost:5000';
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+
 
 function App() {
   const [students, setStudents] = useState([]);
@@ -212,7 +212,7 @@ function App() {
     if (!formData.lastName.trim()) errors.push('Last Name is required');
     
     const age = parseInt(formData.age);
-    if (!age || age < 16 || age > 100) errors.push('Age must be between 16 and 100');
+    if (!age || age < 16 || age > 30) errors.push('Age must be between 16 and 30'); // age for college students
     
     if (!formData.address.trim()) errors.push('Address is required');
     if (!formData.studentId.trim()) errors.push('Student ID is required');
@@ -533,7 +533,7 @@ function App() {
 
       {analytics && (
         <div className="analytics-container">
-          <h2>Student Analytics</h2>
+          <h2>Analytics Dashboard</h2>
           <div className="charts-container">
             <div className="chart">
               <h3>Year Level Distribution</h3>
@@ -571,7 +571,7 @@ function App() {
             <span className="icon">+</span> Add New Student
           </button>
         )}
-        <button className="btn btn-success" onClick={handlePrintPDF}>
+        <button className="btn btn-pdf" onClick={handlePrintPDF}>
           <span className="icon">🖨️</span> Print PDF
         </button>
       </div>
@@ -580,6 +580,7 @@ function App() {
         <div className="entries-selector">
           <span>Show</span>
           <select value={entriesPerPage} onChange={(e) => setEntriesPerPage(e.target.value)}>
+            <option value="5">5</option>
             <option value="10">10</option>
             <option value="25">25</option>
             <option value="50">50</option>
@@ -722,8 +723,8 @@ function App() {
                   onChange={handleChange}
                   required
                   min="16"
-                  max="100"
-                  placeholder="Enter age (16-100)"
+                  max="30"
+                  placeholder="Enter age (16-30)"
                 />
               </div>
               <div className="form-group">
@@ -854,7 +855,7 @@ function App() {
                 />
               </div>
               <div className="modal-actions">
-                <button type="submit" className="btn btn-primary">Login</button>
+                <button type="submit" className="btn btn-login">Login</button>
                 <button 
                   type="button" 
                   className="btn btn-secondary"
