@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { 
+  BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, 
+  Legend, ResponsiveContainer 
+} from 'recharts';
 import 'react-toastify/dist/ReactToastify.css';
 import './App.css';
 import jsPDF from 'jspdf';
@@ -365,16 +369,18 @@ function App() {
   };
 
   // Filter students based on search
-  const filteredStudents = students.filter(student => {
-    const searchTermLower = searchTerm.toLowerCase();
-    return (
-      student.firstName?.toLowerCase().includes(searchTermLower) ||
-      student.lastName?.toLowerCase().includes(searchTermLower) ||
-      student.studentId?.toLowerCase().includes(searchTermLower) ||
-      student.course?.toLowerCase().includes(searchTermLower) ||
-      student.yearLevel?.toLowerCase().includes(searchTermLower)
-    );
-  });
+  const filteredStudents = students
+    .filter(student => {
+      const searchTermLower = searchTerm.toLowerCase();
+      return (
+        student.firstName?.toLowerCase().includes(searchTermLower) ||
+        student.lastName?.toLowerCase().includes(searchTermLower) ||
+        student.studentId?.toLowerCase().includes(searchTermLower) ||
+        student.course?.toLowerCase().includes(searchTermLower) ||
+        student.yearLevel?.toLowerCase().includes(searchTermLower)
+      );
+    })
+    .slice(0, parseInt(entriesPerPage));
 
   // Handle edit click
   const handleEdit = (student) => {
@@ -692,30 +698,97 @@ function App() {
         <div className="analytics-container">
           <h2>Analytics Dashboard</h2>
           <div className="charts-container">
+            {/* Year Level Distribution - Bar Chart */}
             <div className="chart">
               <h3>Year Level Distribution</h3>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={Object.entries(analytics.yearLevelDistribution).map(([name, value]) => ({ name, value }))}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
+                <BarChart 
+                  data={Object.entries(analytics.yearLevelDistribution).map(([name, value]) => ({ name, value }))}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis 
+                    dataKey="name" 
+                    tick={{ fill: '#666', fontSize: 12 }}
+                    tickLine={false}
+                    axisLine={{ stroke: '#E2E8F0' }}
+                  />
+                  <YAxis 
+                    tick={{ fill: '#666', fontSize: 12 }}
+                    tickLine={false}
+                    axisLine={{ stroke: '#E2E8F0' }}
+                  />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                      padding: '12px'
+                    }}
+                  />
                   <Legend />
-                  <Bar dataKey="value" fill="#8884d8" />
+                  <Bar 
+                    dataKey="value" 
+                    name="Students"
+                    fill="#3498db"
+                    radius={[4, 4, 0, 0]}
+                    barSize={60}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
+
+            {/* Course Distribution - Donut Chart */}
             <div className="chart">
               <h3>Course Distribution</h3>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={Object.entries(analytics.courseDistribution).map(([name, value]) => ({ name, value }))}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="value" fill="#82ca9d" />
-                </BarChart>
+                <PieChart>
+                  <Pie
+                    data={Object.entries(analytics.courseDistribution).map(([name, value]) => ({ 
+                      name, 
+                      value,
+                      percentage: (value * 100 / Object.values(analytics.courseDistribution).reduce((a, b) => a + b, 0)).toFixed(0)
+                    }))}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={2}
+                    dataKey="value"
+                    label={({ name, percentage }) => `${name} (${percentage}%)`}
+                    labelLine={true}
+                  >
+                    {Object.entries(analytics.courseDistribution).map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={[
+                          '#3498db',  // Blue
+                          '#2ecc71',  // Green
+                          '#9b59b6',  // Purple
+                          '#e74c3c',  // Red
+                          '#f1c40f',  // Yellow
+                          '#1abc9c'   // Turquoise
+                        ][index % 6]}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                      padding: '12px'
+                    }}
+                    formatter={(value, name, props) => [`${props.payload.percentage}%`, name]}
+                  />
+                  <Legend 
+                    layout="horizontal"
+                    verticalAlign="bottom"
+                    align="center"
+                  />
+                </PieChart>
               </ResponsiveContainer>
             </div>
           </div>
@@ -736,7 +809,11 @@ function App() {
       <div className="filters-row">
         <div className="entries-selector">
           <span>Show</span>
-          <select value={entriesPerPage} onChange={(e) => setEntriesPerPage(e.target.value)}>
+          <select 
+            value={entriesPerPage} 
+            onChange={(e) => setEntriesPerPage(e.target.value)}
+            className="entries-select"
+          >
             <option value="5">5</option>
             <option value="10">10</option>
             <option value="25">25</option>
@@ -744,6 +821,9 @@ function App() {
             <option value="100">100</option>
           </select>
           <span>entries</span>
+        </div>
+        <div className="entries-info">
+          Showing {Math.min(filteredStudents.length, parseInt(entriesPerPage))} of {students.length} entries
         </div>
         <div className="search-box">
           <input
@@ -769,14 +849,11 @@ function App() {
               <th>Year Level</th>
               <th>Section</th>
               <th>Major</th>
-              <th>Edit</th>
-              <th>Delete</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {filteredStudents
-              .slice(0, parseInt(entriesPerPage))
-              .map((student, index) => (
+            {filteredStudents.map((student, index) => (
               <tr key={student.id}>
                 <td>{index + 1}</td>
                 <td>{student.firstName}</td>
@@ -788,19 +865,19 @@ function App() {
                 <td>{student.yearLevel}</td>
                 <td>{student.section}</td>
                 <td>{student.major}</td>
-                <td>
-                  {isAdmin ? (
-                    <button className="btn-icon btn-edit" onClick={() => handleEdit(student)}>✏️</button>
-                  ) : (
-                    <span title="Admin access required">🔒</span>
-                  )}
-                </td>
-                <td>
-                  {isAdmin ? (
-                    <button className="btn-icon btn-delete" onClick={() => handleDelete(student.id)}>🗑️</button>
-                  ) : (
-                    <span title="Admin access required">🔒</span>
-                  )}
+                <td className="action-buttons">
+                  <button 
+                    className="button button--edit"
+                    onClick={() => handleEdit(student)}
+                  >
+                    Edit
+                  </button>
+                  <button 
+                    className="button button--delete"
+                    onClick={() => handleDelete(student.id)}
+                  >
+                    Delete
+                  </button>
                 </td>
               </tr>
             ))}
