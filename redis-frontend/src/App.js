@@ -393,8 +393,19 @@ function App() {
 
   // Export to CSV
   const exportToCSV = () => {
-    // Create CSV headers
-    const headers = ['S.L', 'First Name', 'Last Name', 'Student Id.', 'Course', 'Year Level'];
+    // Create CSV headers with all fields
+    const headers = [
+      'S.L',
+      'First Name',
+      'Last Name',
+      'Student Id.',
+      'Course',
+      'Year Level',
+      'Section',
+      'Major',
+      'Age',
+      'Address'
+    ];
     
     // Convert data to CSV format
     const csvData = filteredStudents.map((student, index) => [
@@ -403,13 +414,20 @@ function App() {
       student.lastName,
       student.studentId,
       student.course,
-      student.yearLevel
+      student.yearLevel,
+      student.section,
+      student.major,
+      student.age,
+      student.address
     ]);
     
     // Combine headers and data
     const csvContent = [
       headers.join(','),
-      ...csvData.map(row => row.join(','))
+      ...csvData.map(row => row.map(cell => 
+        // Handle cells that contain commas by wrapping in quotes
+        cell.toString().includes(',') ? `"${cell}"` : cell
+      ).join(','))
     ].join('\n');
     
     // Create and download CSV file
@@ -429,32 +447,71 @@ function App() {
       const reader = new FileReader();
       reader.onload = async (e) => {
         const text = e.target.result;
-        const rows = text.split('\n');
+        const rows = text.split('\n').filter(row => row.trim()); // Remove empty rows
         
         // Skip header row and process data
         const students = rows.slice(1).map(row => {
-          const [, firstName, lastName, studentId, course, yearLevel] = row.split(',');
-          return { firstName, lastName, studentId, course, yearLevel };
-        }).filter(student => student.firstName && student.studentId); // Filter out empty rows
+          // Split by comma, but handle cases where values might contain commas within quotes
+          const columns = row.split(',').map(col => col.trim());
+          
+          // Map CSV columns to student object with all required fields
+          return {
+            firstName: columns[1] || '',
+            lastName: columns[2] || '',
+            age: '20', // Default value since age is required
+            address: 'Default Address', // Default value since address is required
+            studentId: columns[3] || '',
+            course: columns[4] || '',
+            yearLevel: columns[5] || '1st Year', // Default value
+            section: 'A', // Default value since section is required
+            major: 'General' // Default value since major is required
+          };
+        }).filter(student => 
+          // Validate required fields
+          student.firstName && 
+          student.lastName && 
+          student.studentId && 
+          student.course && 
+          student.yearLevel
+        );
 
-        // Upload each student
+        // Show warning if no valid students found
+        if (students.length === 0) {
+          toast.warning('No valid student records found in CSV file');
+          return;
+        }
+
+        // Upload each student with progress tracking
+        let successCount = 0;
+        let errorCount = 0;
+
         for (const student of students) {
           try {
-            await axios.post(API_URL + '/students', {
-              ...student,
-              id: Date.now().toString() // Generate unique ID
-            });
+            await authAxios.post('/students', student);
+            successCount++;
           } catch (error) {
-            toast.error(`Error importing student ${student.firstName} ${student.lastName}`);
+            errorCount++;
+            console.error('Error importing student:', error);
+            toast.error(`Error importing student ${student.firstName} ${student.lastName}: ${error.response?.data?.message || 'Unknown error'}`);
           }
         }
 
-        toast.success('CSV import completed');
-        fetchStudents(); // Refresh the list
-        event.target.value = ''; // Reset file input
+        // Show summary toast
+        if (successCount > 0) {
+          toast.success(`Successfully imported ${successCount} student${successCount !== 1 ? 's' : ''}`);
+        }
+        if (errorCount > 0) {
+          toast.error(`Failed to import ${errorCount} student${errorCount !== 1 ? 's' : ''}`);
+        }
+
+        // Refresh the list and reset file input
+        await fetchStudents();
+        await fetchAnalytics();
+        event.target.value = '';
       };
       reader.readAsText(file);
     } catch (error) {
+      console.error('Error processing CSV file:', error);
       toast.error('Error processing CSV file');
     }
   };
@@ -568,11 +625,11 @@ function App() {
       <div className="actions-row">
         {isAdmin && (
           <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-            <span className="icon">+</span> Add New Student
+            Add New Student
           </button>
         )}
         <button className="btn btn-pdf" onClick={handlePrintPDF}>
-          <span className="icon">🖨️</span> Print PDF
+          Print PDF
         </button>
       </div>
 
