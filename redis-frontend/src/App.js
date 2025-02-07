@@ -9,6 +9,19 @@ import 'jspdf-autotable';
 
 const API_URL = 'http://localhost:5000';
 
+const toastConfig = {
+  position: "top-right",
+  autoClose: 1000,
+  hideProgressBar: false,
+  closeOnClick: true,
+  pauseOnHover: true,
+  draggable: true,
+  style: {
+    borderRadius: '8px',
+    padding: '16px',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+  }
+};
 
 function App() {
   const [students, setStudents] = useState([]);
@@ -53,9 +66,23 @@ function App() {
       setIsAdmin(true); // Since we only allow admin login
       setShowLoginModal(false);
       setLoginData({ username: '', password: '' });
-      toast.success('Logged in successfully!');
+      toast.success('Logged in successfully!', {
+        ...toastConfig,
+        style: {
+          ...toastConfig.style,
+          background: '#2ecc71',
+          color: 'white'
+        }
+      });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Invalid credentials!');
+      toast.error(error.response?.data?.message || 'Invalid credentials!', {
+        ...toastConfig,
+        style: {
+          ...toastConfig.style,
+          background: '#e74c3c',
+          color: 'white'
+        }
+      });
     }
   };
 
@@ -65,19 +92,11 @@ function App() {
     // Validate passwords match
     if (registerData.password !== registerData.confirmPassword) {
       toast.error('Passwords do not match!', {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
+        ...toastConfig,
         style: {
+          ...toastConfig.style,
           background: '#e74c3c',
-          color: 'white',
-          borderRadius: '8px',
-          padding: '16px',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+          color: 'white'
         }
       });
       return;
@@ -99,19 +118,11 @@ function App() {
           adminCode: '' 
         });
         toast.success('Admin registered successfully! You can now login.', {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
+          ...toastConfig,
           style: {
+            ...toastConfig.style,
             background: '#2ecc71',
-            color: 'white',
-            borderRadius: '8px',
-            padding: '16px',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+            color: 'white'
           }
         });
       }
@@ -119,19 +130,11 @@ function App() {
       console.error('Registration error:', error);
       const errorMessage = error.response?.data?.message || 'Registration failed. Please check your details and try again.';
       toast.error(errorMessage, {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
+        ...toastConfig,
         style: {
+          ...toastConfig.style,
           background: '#e74c3c',
-          color: 'white',
-          borderRadius: '8px',
-          padding: '16px',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+          color: 'white'
         }
       });
     }
@@ -141,7 +144,14 @@ function App() {
     localStorage.removeItem('token');
     setIsAuthenticated(false);
     setIsAdmin(false);
-    toast.info('Logged out successfully');
+    toast.info('Logged out successfully', {
+      ...toastConfig,
+      style: {
+        ...toastConfig.style,
+        background: '#3498db',
+        color: 'white'
+      }
+    });
   };
 
   // Fetch analytics
@@ -187,7 +197,14 @@ function App() {
       const response = await axios.get(`${API_URL}/students`);
       setStudents(response.data);
     } catch (error) {
-      toast.error('Error fetching students!');
+      toast.error('Error fetching students!', {
+        ...toastConfig,
+        style: {
+          ...toastConfig.style,
+          background: '#e74c3c',
+          color: 'white'
+        }
+      });
     }
   };
 
@@ -232,13 +249,27 @@ function App() {
     const errors = validateForm();
     
     if (errors.length > 0) {
-      errors.forEach(error => toast.error(error));
+      errors.forEach(error => toast.error(error, {
+        ...toastConfig,
+        style: {
+          ...toastConfig.style,
+          background: '#e74c3c',
+          color: 'white'
+        }
+      }));
       return;
     }
 
     try {
       await authAxios.post('/students', formData);
-      toast.success('Student added successfully!');
+      toast.success('Student added successfully!', {
+        ...toastConfig,
+        style: {
+          ...toastConfig.style,
+          background: '#2ecc71',
+          color: 'white'
+        }
+      });
       await fetchStudents();
       await fetchAnalytics();
       setFormData({
@@ -255,23 +286,51 @@ function App() {
       });
       setShowModal(false);
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Error adding student!');
+      toast.error(error.response?.data?.message || 'Error adding student!', {
+        ...toastConfig,
+        style: {
+          ...toastConfig.style,
+          background: '#e74c3c',
+          color: 'white'
+        }
+      });
     }
   };
 
   const handleDelete = async (id) => {
     if (!isAdmin) {
-      toast.error('Admin access required!');
+      toast.error('Admin access required!', {
+        ...toastConfig,
+        style: {
+          ...toastConfig.style,
+          background: '#e74c3c',
+          color: 'white'
+        }
+      });
       return;
     }
     if (window.confirm('Are you sure you want to delete this student?')) {
       try {
         await authAxios.delete(`/students/${id}`);
-        toast.success('Student deleted successfully!');
+        toast.success('Student deleted successfully!', {
+          ...toastConfig,
+          style: {
+            ...toastConfig.style,
+            background: '#e67e22',
+            color: 'white'
+          }
+        });
         await fetchStudents();
         await fetchAnalytics();
       } catch (error) {
-        toast.error(error.response?.data?.message || 'Error deleting student!');
+        toast.error(error.response?.data?.message || 'Error deleting student!', {
+          ...toastConfig,
+          style: {
+            ...toastConfig.style,
+            background: '#e74c3c',
+            color: 'white'
+          }
+        });
       }
     }
   };
@@ -280,14 +339,28 @@ function App() {
     e.preventDefault();
     try {
       await authAxios.put(`/students/${formData.id}`, formData);
-      toast.success('Student updated successfully!');
+      toast.success('Student updated successfully!', {
+        ...toastConfig,
+        style: {
+          ...toastConfig.style,
+          background: '#2ecc71',
+          color: 'white'
+        }
+      });
       await fetchStudents();
       await fetchAnalytics();
       setFormData({ id: '', firstName: '', lastName: '', age: '', address: '', studentId: '', course: '', yearLevel: '', section: '', major: '' });
       setShowModal(false);
       setIsEditing(false);
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Error updating student!');
+      toast.error(error.response?.data?.message || 'Error updating student!', {
+        ...toastConfig,
+        style: {
+          ...toastConfig.style,
+          background: '#e74c3c',
+          color: 'white'
+        }
+      });
     }
   };
 
@@ -306,7 +379,14 @@ function App() {
   // Handle edit click
   const handleEdit = (student) => {
     if (!isAdmin) {
-      toast.error('Admin access required to edit students!');
+      toast.error('Admin access required to edit students!', {
+        ...toastConfig,
+        style: {
+          ...toastConfig.style,
+          background: '#e74c3c',
+          color: 'white'
+        }
+      });
       return;
     }
     setFormData(student);
@@ -477,7 +557,14 @@ function App() {
 
         // Show warning if no valid students found
         if (students.length === 0) {
-          toast.warning('No valid student records found in CSV file');
+          toast.warning('No valid student records found in CSV file', {
+            ...toastConfig,
+            style: {
+              ...toastConfig.style,
+              background: '#f1c40f',
+              color: '#2c3e50'
+            }
+          });
           return;
         }
 
@@ -492,16 +579,37 @@ function App() {
           } catch (error) {
             errorCount++;
             console.error('Error importing student:', error);
-            toast.error(`Error importing student ${student.firstName} ${student.lastName}: ${error.response?.data?.message || 'Unknown error'}`);
+            toast.error(`Error importing student ${student.firstName} ${student.lastName}: ${error.response?.data?.message || 'Unknown error'}`, {
+              ...toastConfig,
+              style: {
+                ...toastConfig.style,
+                background: '#e74c3c',
+                color: 'white'
+              }
+            });
           }
         }
 
         // Show summary toast
         if (successCount > 0) {
-          toast.success(`Successfully imported ${successCount} student${successCount !== 1 ? 's' : ''}`);
+          toast.success(`Successfully imported ${successCount} student${successCount !== 1 ? 's' : ''}`, {
+            ...toastConfig,
+            style: {
+              ...toastConfig.style,
+              background: '#2ecc71',
+              color: 'white'
+            }
+          });
         }
         if (errorCount > 0) {
-          toast.error(`Failed to import ${errorCount} student${errorCount !== 1 ? 's' : ''}`);
+          toast.error(`Failed to import ${errorCount} student${errorCount !== 1 ? 's' : ''}`, {
+            ...toastConfig,
+            style: {
+              ...toastConfig.style,
+              background: '#e74c3c',
+              color: 'white'
+            }
+          });
         }
 
         // Refresh the list and reset file input
@@ -512,7 +620,14 @@ function App() {
       reader.readAsText(file);
     } catch (error) {
       console.error('Error processing CSV file:', error);
-      toast.error('Error processing CSV file');
+      toast.error('Error processing CSV file', {
+        ...toastConfig,
+        style: {
+          ...toastConfig.style,
+          background: '#e74c3c',
+          color: 'white'
+        }
+      });
     }
   };
 
@@ -520,12 +635,11 @@ function App() {
   const deleteAllStudents = async () => {
     if (!isAdmin) {
       toast.error('Admin access required!', {
+        ...toastConfig,
         style: {
+          ...toastConfig.style,
           background: '#e74c3c',
-          color: 'white',
-          borderRadius: '8px',
-          padding: '16px',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+          color: 'white'
         }
       });
       return;
@@ -533,18 +647,11 @@ function App() {
     try {
       await authAxios.delete('/students/all');
       toast.success('All student records deleted successfully!', {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
+        ...toastConfig,
         style: {
+          ...toastConfig.style,
           background: '#e67e22',
-          color: 'white',
-          borderRadius: '8px',
-          padding: '16px',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+          color: 'white'
         }
       });
       await fetchStudents();
@@ -552,18 +659,11 @@ function App() {
       setShowDeleteAllModal(false);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Error deleting all records!', {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
+        ...toastConfig,
         style: {
+          ...toastConfig.style,
           background: '#e74c3c',
-          color: 'white',
-          borderRadius: '8px',
-          padding: '16px',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+          color: 'white'
         }
       });
     }
@@ -1021,7 +1121,18 @@ function App() {
         </div>
       )}
 
-      <ToastContainer />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
     </div>
   );
 }
