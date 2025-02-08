@@ -479,162 +479,122 @@ function App() {
 
   // Export to CSV
   const exportToCSV = () => {
-    // Create CSV headers with all fields
-    const headers = [
-      'S.L',
-      'First Name',
-      'Last Name',
-      'Student Id.',
-      'Course',
-      'Year Level',
-      'Section',
-      'Major',
-      'Age',
-      'Address'
-    ];
-    
-    // Convert data to CSV format
-    const csvData = filteredStudents.map((student, index) => [
-      index + 1,
-      student.firstName,
-      student.lastName,
-      student.studentId,
-      student.course,
-      student.yearLevel,
-      student.section,
-      student.major,
-      student.age,
-      student.address
-    ]);
-    
-    // Combine headers and data
-    const csvContent = [
-      headers.join(','),
-      ...csvData.map(row => row.map(cell => 
-        // Handle cells that contain commas by wrapping in quotes
-        cell.toString().includes(',') ? `"${cell}"` : cell
-      ).join(','))
-    ].join('\n');
-    
-    // Create and download CSV file
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'student_records.csv';
-    link.click();
+    try {
+      const csvContent = [
+        // Header row with all fields
+        ['First Name', 'Last Name', 'Age', 'Address', 'Student ID', 'Course', 'Year Level', 'Section', 'Major'],
+        // Data rows
+        ...students.map(student => [
+          student.firstName,
+          student.lastName,
+          student.age,
+          student.address,
+          student.studentId,
+          student.course,
+          student.yearLevel,
+          student.section,
+          student.major
+        ])
+      ]
+      .map(row => row.join(','))
+      .join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'student_records.csv');
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.success('Data exported successfully!', toastConfig);
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export data', toastConfig);
+    }
   };
 
   // Import from CSV
-  const handleFileUpload = async (event) => {
-    const file = event.target.files[0];
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
     if (!file) return;
 
     try {
       const reader = new FileReader();
-      reader.onload = async (e) => {
-        const text = e.target.result;
-        const rows = text.split('\n').filter(row => row.trim()); // Remove empty rows
-        
-        // Skip header row and process data
-        const students = rows.slice(1).map(row => {
-          // Split by comma, but handle cases where values might contain commas within quotes
-          const columns = row.split(',').map(col => col.trim());
-          
-          // Map CSV columns to student object with all required fields
-          return {
-            firstName: columns[1] || '',
-            lastName: columns[2] || '',
-            age: '20', // Default value since age is required
-            address: 'Default Address', // Default value since address is required
-            studentId: columns[3] || '',
-            course: columns[4] || '',
-            yearLevel: columns[5] || '1st Year', // Default value
-            section: 'A', // Default value since section is required
-            major: 'General' // Default value since major is required
-          };
-        }).filter(student => 
-          // Validate required fields
-          student.firstName && 
-          student.lastName && 
-          student.studentId && 
-          student.course && 
-          student.yearLevel
+      reader.onload = async (event) => {
+        const csvData = event.target.result;
+        const lines = csvData.split('\n');
+        const headers = lines[0].split(',');
+
+        // Validate CSV structure
+        const requiredHeaders = [
+          'First Name', 'Last Name', 'Age', 'Address', 
+          'Student ID', 'Course', 'Year Level', 'Section', 'Major'
+        ];
+
+        const hasValidHeaders = requiredHeaders.every(header => 
+          headers.map(h => h.trim()).includes(header)
         );
 
-        // Show warning if no valid students found
-        if (students.length === 0) {
-          toast.warning('No valid student records found in CSV file', {
-            ...toastConfig,
-            style: {
-              ...toastConfig.style,
-              background: '#f1c40f',
-              color: '#2c3e50'
-            }
-          });
+        if (!hasValidHeaders) {
+          toast.error('Invalid CSV format. Please use the exported format as template.', toastConfig);
           return;
         }
 
-        // Upload each student with progress tracking
-        let successCount = 0;
-        let errorCount = 0;
+        // Process data rows
+        const newStudents = [];
+        for (let i = 1; i < lines.length; i++) {
+          if (!lines[i].trim()) continue; // Skip empty lines
+          
+          const values = lines[i].split(',').map(value => value.trim());
+          const student = {
+            firstName: values[headers.indexOf('First Name')],
+            lastName: values[headers.indexOf('Last Name')],
+            age: values[headers.indexOf('Age')],
+            address: values[headers.indexOf('Address')],
+            studentId: values[headers.indexOf('Student ID')],
+            course: values[headers.indexOf('Course')],
+            yearLevel: values[headers.indexOf('Year Level')],
+            section: values[headers.indexOf('Section')],
+            major: values[headers.indexOf('Major')]
+          };
 
-        for (const student of students) {
+          // Validate required fields
+          if (!student.firstName || !student.lastName || !student.studentId) {
+            toast.error(`Row ${i}: Missing required fields`, toastConfig);
+            continue;
+          }
+
+          newStudents.push(student);
+        }
+
+        // Send to backend
+        const token = localStorage.getItem('token');
+        for (const student of newStudents) {
           try {
-            await authAxios.post('/students', student);
-            successCount++;
-          } catch (error) {
-            errorCount++;
-            console.error('Error importing student:', error);
-            toast.error(`Error importing student ${student.firstName} ${student.lastName}: ${error.response?.data?.message || 'Unknown error'}`, {
-              ...toastConfig,
-              style: {
-                ...toastConfig.style,
-                background: '#e74c3c',
-                color: 'white'
-              }
+            await axios.post(`${API_URL}/students`, student, {
+              headers: { Authorization: `Bearer ${token}` }
             });
+          } catch (error) {
+            console.error('Error importing student:', student, error);
+            toast.error(`Failed to import: ${student.firstName} ${student.lastName}`, toastConfig);
           }
         }
 
-        // Show summary toast
-        if (successCount > 0) {
-          toast.success(`Successfully imported ${successCount} student${successCount !== 1 ? 's' : ''}`, {
-            ...toastConfig,
-            style: {
-              ...toastConfig.style,
-              background: '#2ecc71',
-              color: 'white'
-            }
-          });
-        }
-        if (errorCount > 0) {
-          toast.error(`Failed to import ${errorCount} student${errorCount !== 1 ? 's' : ''}`, {
-            ...toastConfig,
-            style: {
-              ...toastConfig.style,
-              background: '#e74c3c',
-              color: 'white'
-            }
-          });
-        }
-
-        // Refresh the list and reset file input
-        await fetchStudents();
-        await fetchAnalytics();
-        event.target.value = '';
+        toast.success(`Successfully imported ${newStudents.length} students`, toastConfig);
+        fetchStudents(); // Refresh the list
       };
+
       reader.readAsText(file);
     } catch (error) {
-      console.error('Error processing CSV file:', error);
-      toast.error('Error processing CSV file', {
-        ...toastConfig,
-        style: {
-          ...toastConfig.style,
-          background: '#e74c3c',
-          color: 'white'
-        }
-      });
+      console.error('Import error:', error);
+      toast.error('Failed to import data', toastConfig);
     }
+
+    // Reset file input
+    e.target.value = '';
   };
 
   // Add deleteAllStudents function

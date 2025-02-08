@@ -194,41 +194,38 @@ app.delete('/students/all', authenticateToken, isAdmin, async (req, res) => {
 
 // Route to save student data
 app.post('/students', authenticateToken, isAdmin, async (req, res) => {
-  const { firstName, lastName, age, address, studentId, course, yearLevel, section, major } = req.body;
+  const { 
+    firstName, lastName, age, address, 
+    studentId, course, yearLevel, section, major 
+  } = req.body;
+
+  // Validate required fields
+  if (!firstName || !lastName || !studentId) {
+    return res.status(400).json({ message: 'Required fields missing' });
+  }
+
   const id = Date.now().toString();
 
-  // Validate input fields
-  if (!firstName || !lastName || !age || !address || !studentId || !course || !yearLevel || !section || !major) {
-    return res.status(400).json({ message: 'All fields are required' });
-  }
-
-  // Validate studentId (numbers only)
-  if (!/^\d+$/.test(studentId)) {
-    return res.status(400).json({ message: 'Student ID must contain only numbers' });
-  }
-
-  // Validate age (must be a number between 16 and 100)
-  const ageNum = parseInt(age);
-  if (isNaN(ageNum) || ageNum < 16 || ageNum > 100) {
-    return res.status(400).json({ message: 'Age must be between 16 and 100' });
-  }
-
   try {
-    // Save student data in Redis hash
-    await client.hSet(`student:${id}`, 'firstName', firstName);
-    await client.hSet(`student:${id}`, 'lastName', lastName);
-    await client.hSet(`student:${id}`, 'age', age.toString());
-    await client.hSet(`student:${id}`, 'address', address);
-    await client.hSet(`student:${id}`, 'studentId', studentId);
-    await client.hSet(`student:${id}`, 'course', course);
-    await client.hSet(`student:${id}`, 'yearLevel', yearLevel);
-    await client.hSet(`student:${id}`, 'section', section);
-    await client.hSet(`student:${id}`, 'major', major);
+    // Save all fields
+    await client.hSet(`student:${id}`, {
+      firstName,
+      lastName,
+      age: age?.toString() || '',
+      address: address || '',
+      studentId,
+      course: course || '',
+      yearLevel: yearLevel || '',
+      section: section || '',
+      major: major || ''
+    });
 
-    // Respond with success message and the created student data
     res.status(201).json({ 
       message: 'Student saved successfully',
-      student: { id, firstName, lastName, age, address, studentId, course, yearLevel, section, major }
+      student: { 
+        id, firstName, lastName, age, address, 
+        studentId, course, yearLevel, section, major 
+      }
     });
   } catch (error) {
     console.error('Error saving student:', error);
